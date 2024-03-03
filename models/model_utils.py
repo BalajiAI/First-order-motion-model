@@ -44,6 +44,26 @@ class AntiAliasInterpolation2d(nn.Module):
         return out
 
 
+def kp2gaussian(kp, spatial_size, kp_variance):
+
+    mean = kp['value']
+
+    coordinate_grid = create_coordinate_grid(spatial_size, mean.type())
+    number_of_leading_dimensions = len(mean.shape) - 1
+    shape = (1,) * number_of_leading_dimensions + coordinate_grid.shape
+    coordinate_grid = coordinate_grid.view(*shape)
+    repeats = mean.shape[:number_of_leading_dimensions] + (1, 1, 1)
+    coordinate_grid = coordinate_grid.repeat(*repeats)
+
+    shape = mean.shape[:number_of_leading_dimensions] + (1, 1, 2)
+    mean = mean.view(*shape)
+    mean_sub = (coordinate_grid - mean)
+
+    out = torch.exp(-0.5 * (mean_sub ** 2).sum(-1) / kp_variance)
+
+    return out
+
+
 def create_coordinate_grid(spatial_size, type):
     """
     Creates a meshgrid [-1,1] x [-1,1] of given spatial_size.

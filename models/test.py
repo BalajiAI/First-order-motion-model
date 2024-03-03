@@ -2,18 +2,15 @@
 
 import torch
 
-from hourglass import Encoder
-from hourglass import Decoder
 from hourglass import Hourglass
-
 from keypoint_detector import KPDetector
+from dense_motion_net import DenseMotionNetwork
+
 
 if __name__ == "__main__":
    
    #Test Hourglass
    sample_input = torch.randn((1, 3, 256, 256))
-   encoder = Encoder(block_expansion=32, in_features=3, num_blocks=3, max_features=256)
-   decoder = Decoder(block_expansion=32, in_features=3, num_blocks=3, max_features=256)
    hourglass = Hourglass(block_expansion=32, in_features=3, num_blocks=3, max_features=256)
    print(hourglass(sample_input).shape)
 
@@ -21,6 +18,16 @@ if __name__ == "__main__":
    kp_detector = KPDetector(block_expansion=32, num_kp=10, num_channels=3, max_features=256,
                  num_blocks=5, temperature=0.1, estimate_jacobian=True, scale_factor=0.25,
                  single_jacobian_map=False, pad=0)
-   out = kp_detector(sample_input)
-   print(out['value'].shape)
-   print(out['jacobian'].shape)
+   out_kp = kp_detector(sample_input)
+   print(out_kp['value'].shape)
+   print(out_kp['jacobian'].shape)
+
+   #Test DenseMotionNetwork
+   dense_motion_net = DenseMotionNetwork(block_expansion=64, num_blocks=5, max_features=1024,
+                                         num_kp=10, num_channels=3, estimate_occlusion_map=True,
+                                         scale_factor=0.25)
+   source_image = torch.randn((1, 3, 256, 256))
+   kp_driving = out_kp
+   kp_source = out_kp
+   out = dense_motion_net(source_image, kp_driving, kp_source)
+   print(out['occlusion_map'].shape)
