@@ -5,6 +5,7 @@ import torch
 from hourglass import Hourglass
 from keypoint_detector import KPDetector
 from dense_motion_net import DenseMotionNetwork
+from generator import OcclusionAwareGenerator
 
 
 if __name__ == "__main__":
@@ -31,3 +32,13 @@ if __name__ == "__main__":
    kp_source = out_kp
    out = dense_motion_net(source_image, kp_driving, kp_source)
    print(out['occlusion_map'].shape)
+
+   #Test OcclusionAwareGenerator
+   dense_motion_params = {'block_expansion': 64, 'max_features': 1024,
+                          'num_blocks': 5, 'scale_factor': 0.25}
+   generator = OcclusionAwareGenerator(num_channels=3, num_kp=10, block_expansion=64,
+                                       max_features=512, num_down_blocks=2, num_bottleneck_blocks=6,
+                                       estimate_occlusion_map=True, dense_motion_params=dense_motion_params, estimate_jacobian=True)
+   out = generator(source_image, kp_driving, kp_source)
+   print(out['prediction'].shape)
+   
