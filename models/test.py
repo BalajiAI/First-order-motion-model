@@ -6,6 +6,7 @@ from hourglass import Hourglass
 from keypoint_detector import KPDetector
 from dense_motion_net import DenseMotionNetwork
 from generator import OcclusionAwareGenerator
+from discriminator import MultiScaleDiscriminator
 
 
 if __name__ == "__main__":
@@ -39,6 +40,12 @@ if __name__ == "__main__":
    generator = OcclusionAwareGenerator(num_channels=3, num_kp=10, block_expansion=64,
                                        max_features=512, num_down_blocks=2, num_bottleneck_blocks=6,
                                        estimate_occlusion_map=True, dense_motion_params=dense_motion_params, estimate_jacobian=True)
-   out = generator(source_image, kp_driving, kp_source)
-   print(out['prediction'].shape)
+   out_gen = generator(source_image, kp_driving, kp_source)
+   print(out_gen['prediction'].shape)
+   
+   #Test MultiScaleDiscriminator
+   discriminator = MultiScaleDiscriminator(scales=[1], block_expansion=32, max_features=512,
+                                           num_blocks=4, sn=True)
+   #Discriminator takes image_pyramid output as an input
+
    
