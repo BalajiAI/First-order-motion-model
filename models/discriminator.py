@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from model_utils import kp2gaussian
+from utils import kp2gaussian
 
 
 class DownBlock2d(nn.Module):

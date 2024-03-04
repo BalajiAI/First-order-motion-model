@@ -3,7 +3,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from hourglass import Hourglass
-from model_utils import *
+from modules import AntiAliasInterpolation2d
+from utils import create_coordinate_grid, kp2gaussian
 
 
 class DenseMotionNetwork(nn.Module):
