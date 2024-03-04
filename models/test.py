@@ -7,6 +7,7 @@ from keypoint_detector import KPDetector
 from dense_motion_net import DenseMotionNetwork
 from generator import OcclusionAwareGenerator
 from discriminator import MultiScaleDiscriminator
+from model import GeneratorModel, DiscriminatorModel
 
 
 if __name__ == "__main__":
@@ -46,6 +47,25 @@ if __name__ == "__main__":
    #Test MultiScaleDiscriminator
    discriminator = MultiScaleDiscriminator(scales=[1], block_expansion=32, max_features=512,
                                            num_blocks=4, sn=True)
-   #Discriminator takes image_pyramid output as an input
-
    
+   #Test GeneratorModel
+   x = {"source": source_image, "driving": source_image}
+   train_params = {"scales": [1, 0.5, 0.25, 0.125], "loss_weights":{
+      "generator_gan": 0,
+      "discriminator_gan": 1,
+      "feature_matching": [10, 10, 10, 10],
+      "perceptual": [10, 10, 10, 10, 10],
+      "equivariance_value": 10,
+      "equivariance_jacobian": 10}, "transform_params": {
+      "sigma_affine": 0.05,
+      "sigma_tps": 0.005,
+      "points_tps": 5}}
+   
+   generator_model = GeneratorModel(kp_detector, generator, discriminator, train_params)
+   loss_values, generated = generator_model(x)
+   print(generated['prediction'].shape)
+   
+   #Test DiscriminatorModel
+   discriminator_model = DiscriminatorModel(kp_detector, generator, discriminator, train_params)
+   loss_values = discriminator_model(x, generated)
+   print(loss_values)

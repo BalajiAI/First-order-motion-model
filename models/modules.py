@@ -115,7 +115,7 @@ class AntiAliasInterpolation2d(nn.Module):
 class Vgg19(nn.Module):
     def __init__(self, requires_grad=False):
         super().__init__()
-        vgg_pretrained_features = torchvision.models.vgg19(pretrained=True).features
+        vgg_pretrained_features = torchvision.models.vgg19(weights="IMAGENET1K_V1").features
         self.slice1 = nn.Sequential()
         self.slice2 = nn.Sequential()
         self.slice3 = nn.Sequential()
