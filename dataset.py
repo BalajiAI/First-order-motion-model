@@ -16,9 +16,9 @@ def get_transform():
 
 
 class VoxCelebaDataset(Dataset):
-    def __init__(self, root_dir:str, transform=None):
+    def __init__(self, data_path:str, transform=None):
         super().__init__()
-        self.videos = glob.glob(root_dir+'/'+'*.mp4')
+        self.videos = glob.glob(data_path+'/'+'*.mp4')
         self.transform = transform
 
     def __len__(self):

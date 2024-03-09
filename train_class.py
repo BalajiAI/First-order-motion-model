@@ -88,7 +88,19 @@ class FirstOrderMotionModel:
 
         losses_generator.update(losses_discriminator)
         losses = {key: value.mean().detach().data.cpu().numpy() for key, value in losses_generator.items()}
+        
+        return losses
 
-    def train(self, datloader):
-        pass      
+    def train(self, dataloader):
+        for epoch in range(0, self.config['train_params']['num_epochs']):
+            for x in dataloader:
+                losses = self.optimize(x)
+                #log the loss for taking an average over all the batches
+            
+            #update lr
+            self.scheduler_kp_detector.step()
+            self.scheduler_generator.step()
+            self.scheduler_discriminator.step()
+
+            #log the epoch loss
      
