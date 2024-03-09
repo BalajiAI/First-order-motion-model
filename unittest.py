@@ -2,12 +2,12 @@
 
 import torch
 
-from hourglass import Hourglass
-from keypoint_detector import KPDetector
-from dense_motion_net import DenseMotionNetwork
-from generator import OcclusionAwareGenerator
-from discriminator import MultiScaleDiscriminator
-from model import GeneratorModel, DiscriminatorModel
+from models.hourglass import Hourglass
+from models.keypoint_detector import KPDetector
+from models.dense_motion_net import DenseMotionNetwork
+from models.generator import OcclusionAwareGenerator
+from models.discriminator import MultiScaleDiscriminator
+from models.model import GeneratorModel, DiscriminatorModel
 
 
 if __name__ == "__main__":

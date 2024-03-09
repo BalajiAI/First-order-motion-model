@@ -1,8 +1,8 @@
 import torch
 import torch.nn as nn
 
-from modules import Vgg19, ImagePyramide
-from utils import Transform, detach_kp
+from models.modules import Vgg19, ImagePyramide
+from models.utils import Transform, detach_kp
 
 
 class GeneratorModel(nn.Module):
