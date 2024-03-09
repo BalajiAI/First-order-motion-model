@@ -7,17 +7,21 @@ from models.generator import OcclusionAwareGenerator
 from models.discriminator import MultiScaleDiscriminator
 from models.model import GeneratorModel, DiscriminatorModel
 
+from logger import Logger
+
 
 class FirstOrderMotionModel:
-    def __init__(self, config_path, checkpoint_path=None) -> None:
+    def __init__(self, config_path, log_path=None) -> None:
         self.config = self._read_config(config_path)
 
         self.initialize_models(self.config['model_params'])
         self.initialize_optimizers(self.config['train_params'])
         self.initialize_lr_schedulers(self.config['train_params'])
 
-        if checkpoint_path is not None:
-            self.load_checkpoint(checkpoint_path)
+        # if checkpoint_path is not None:
+        #     self.load_checkpoint(checkpoint_path)
+
+        self.logger = Logger(log_path)
 
     def _read_config(self, config_path):
         f = open(config_path, "r")
@@ -56,6 +60,9 @@ class FirstOrderMotionModel:
     def send_to_gpu(self):
         pass
 
+    def save_checkpoint(self, checkpoint_path):
+        pass
+
     def load_checkpoint(self, checkpoint_path):
         pass
 
@@ -87,20 +94,21 @@ class FirstOrderMotionModel:
             losses_discriminator = {}
 
         losses_generator.update(losses_discriminator)
-        losses = {key: value.mean().detach().data.cpu().numpy() for key, value in losses_generator.items()}
+        losses = {key: value.mean().detach().data.cpu().item() for key, value in losses_generator.items()}
         
         return losses
 
     def train(self, dataloader):
-        for epoch in range(0, self.config['train_params']['num_epochs']):
+        for epoch in range(1, self.config['train_params']['num_epochs']+1):
             for x in dataloader:
                 losses = self.optimize(x)
-                #log the loss for taking an average over all the batches
+                self.logger.log_batch_loss(losses)
             
             #update lr
             self.scheduler_kp_detector.step()
             self.scheduler_generator.step()
             self.scheduler_discriminator.step()
 
-            #log the epoch loss
+            self.logger.log_epoch_loss(epoch)
+     
      

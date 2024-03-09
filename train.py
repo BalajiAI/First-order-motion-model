@@ -10,7 +10,7 @@ if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument("--data_path", default="train_videos", help="path to training data")
     parser.add_argument("--config_path", default="config.yaml", help="path to config file")
-    parser.add_argument("--log_dir", default='log', help="path to log")
+    parser.add_argument("--log_path", default='logs', help="path to log")
     parser.add_argument("--checkpoint", default=None, help="path to save the checkpoint")
 
     args = parser.parse_args()
