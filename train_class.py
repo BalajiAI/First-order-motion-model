@@ -1,3 +1,4 @@
+import os
 import yaml
 import torch
 from torch.optim.lr_scheduler import MultiStepLR
@@ -11,17 +12,27 @@ from logger import Logger
 
 
 class FirstOrderMotionModel:
-    def __init__(self, config_path, log_path=None) -> None:
+    def __init__(self, config_path, log_path="logs", checkpoint_path=None) -> None:
         self.config = self._read_config(config_path)
 
         self.initialize_models(self.config['model_params'])
         self.initialize_optimizers(self.config['train_params'])
-        self.initialize_lr_schedulers(self.config['train_params'])
+        
+        if checkpoint_path is not None:
+            self.start_epoch = self.load_checkpoint(checkpoint_path)
+        else:
+            self.start_epoch = 1
+            
+        #check whether to use 1 or 0 indexing for epoch. Coz lr_scheduler depends on it.
 
-        # if checkpoint_path is not None:
-        #     self.load_checkpoint(checkpoint_path)
+        self.initialize_lr_schedulers(self.config['train_params'], self.start_epoch)
 
-        self.logger = Logger(log_path)
+        if not os.path.exists(log_path):
+            os.makedirs(log_path+'/checkpoints')
+            os.makedirs(log_path+'/vis')       
+
+        self.logger = Logger(log_path, "log.txt")
+        self.log_path = log_path
 
     def _read_config(self, config_path):
         f = open(config_path, "r")
@@ -60,11 +71,27 @@ class FirstOrderMotionModel:
     def send_to_gpu(self):
         pass
 
-    def save_checkpoint(self, checkpoint_path):
-        pass
+    def save_checkpoint(self, current_epoch):
+        cpk = {'kp_detector': self.kp_detector.state_dict(),
+               'generator': self.generator.state_dict(),
+               'discriminator': self.discriminator.state_dict(),
+               'opt_kp_detector': self.opt_kp_detector.state_dict(),
+               'opt_generator': self.opt_generator.state_dict(),
+               'opt_discriminator': self.opt_discriminator.state_dict(),
+               'epoch': current_epoch}
+        cpk_path = f"{self.log_path}/checkpoints/{current_epoch}-checkpoint.pth"
+        torch.save(cpk, cpk_path)          
 
     def load_checkpoint(self, checkpoint_path):
-        pass
+        cpk = torch.load(checkpoint_path, map_location='cpu')
+        self.kp_detector.load_state_dict(cpk['kp_detector'])
+        self.generator.load_state_dict(cpk['generator'])
+        self.discriminator.load_state_dict(cpk['discriminator'])
+        self.opt_kp_detector.load_state_dict(cpk['opt_kp_detector'])
+        self.opt_generator.load_state_dict(cpk['opt_generator'])
+        self.opt_discriminator.load_state_dict(cpk['opt_discriminator'])
+
+        return cpk['epoch']
 
     def optimize(self, x):
         losses_generator, generated = self.generator_model(x)
@@ -99,7 +126,7 @@ class FirstOrderMotionModel:
         return losses
 
     def train(self, dataloader):
-        for epoch in range(1, self.config['train_params']['num_epochs']+1):
+        for epoch in range(self.start_epoch, self.config['train_params']['num_epochs']+1):
             for x in dataloader:
                 losses = self.optimize(x)
                 self.logger.log_batch_loss(losses)
@@ -111,4 +138,5 @@ class FirstOrderMotionModel:
 
             self.logger.log_epoch_loss(epoch)
      
-     
+            if (epoch + 1) % self.config['train_params']['checkpoint_freq'] == 0:
+                self.save_checkpoint(epoch)

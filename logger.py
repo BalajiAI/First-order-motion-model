@@ -5,18 +5,18 @@ import numpy as np
 
 
 class Logger:
-    def __init__(self, log_path):
-        self.logger = self.get_logger(log_path)
+    def __init__(self, log_path, log_filename):
+        self.logger = self.get_logger(log_path, log_filename)
         self.batch_losses = []
         self.loss_names = None
   
-    def get_logger(self, log_path):
+    def get_logger(self, log_path, log_filename):
         logger = logging.getLogger()
         logger.handlers.clear()
 
         logger.setLevel(logging.INFO)    
         # Logging to a file
-        file_handler = logging.FileHandler(f"{log_path}/log.txt")
+        file_handler = logging.FileHandler(f"{log_path}/{log_filename}")
         file_handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s: %(message)s'))
         logger.addHandler(file_handler)
         # Logging to console
