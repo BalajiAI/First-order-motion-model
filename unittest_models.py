@@ -64,6 +64,7 @@ if __name__ == "__main__":
    generator_model = GeneratorModel(kp_detector, generator, discriminator, train_params)
    loss_values, generated = generator_model(x)
    print(generated['prediction'].shape)
+   print(loss_values)
    
    #Test DiscriminatorModel
    discriminator_model = DiscriminatorModel(kp_detector, generator, discriminator, train_params)
