@@ -21,5 +21,6 @@ if __name__ == "__main__":
     model = FirstOrderMotionModel(config_path=args.config_path,
                                   checkpoint_path=args.checkpoint_path)
     
+    print("Training...")
     model.train(dataloader)
     
