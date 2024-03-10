@@ -21,9 +21,7 @@ class FirstOrderMotionModel:
         if checkpoint_path is not None:
             self.start_epoch = self.load_checkpoint(checkpoint_path)
         else:
-            self.start_epoch = 1
-            
-        #check whether to use 1 or 0 indexing for epoch. Coz lr_scheduler depends on it.
+            self.start_epoch = 0
 
         self.initialize_lr_schedulers(self.config['train_params'], self.start_epoch)
 
@@ -126,7 +124,7 @@ class FirstOrderMotionModel:
         return losses
 
     def train(self, dataloader):
-        for epoch in range(self.start_epoch, self.config['train_params']['num_epochs']+1):
+        for epoch in range(self.start_epoch, self.config['train_params']['num_epochs']):
             for x in dataloader:
                 losses = self.optimize(x)
                 self.logger.log_batch_loss(losses)
