@@ -27,7 +27,7 @@ class FirstOrderMotionModel:
 
         if not os.path.exists(log_path):
             os.makedirs(log_path+'/checkpoints')
-            os.makedirs(log_path+'/vis')       
+            os.makedirs(log_path+'/visualizations')       
 
         self.logger = Logger(log_path, "log.txt")
         self.log_path = log_path
@@ -121,12 +121,12 @@ class FirstOrderMotionModel:
         losses_generator.update(losses_discriminator)
         losses = {key: value.mean().detach().data.cpu().item() for key, value in losses_generator.items()}
         
-        return losses
+        return losses, generated
 
     def train(self, dataloader):
         for epoch in range(self.start_epoch, self.config['train_params']['num_epochs']):
             for x in dataloader:
-                losses = self.optimize(x)
+                losses, output = self.optimize(x)
                 self.logger.log_batch_loss(losses)
             
             #update lr
@@ -138,3 +138,6 @@ class FirstOrderMotionModel:
      
             if (epoch + 1) % self.config['train_params']['checkpoint_freq'] == 0:
                 self.save_checkpoint(epoch)
+
+            if (epoch + 1) % self.config['train_params']['visualization_freq'] == 0:
+                self.logger.log_vis_images(x['source'], x['driving'], output, epoch)
