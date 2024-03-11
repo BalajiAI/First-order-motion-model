@@ -105,16 +105,16 @@ class Visualizer:
         kp_driving = out['kp_driving']['value'].cpu().numpy()[:self.num_rows]
         images.append((driving, kp_driving))
 
-        #generated driving image
-        prediction = out['prediction'].cpu().numpy()[:self.num_rows]
-        prediction = np.transpose(prediction, [0, 2, 3, 1])
-        images.append(prediction)
-
         ## Occlusion map  
         occlusion_map = out['occlusion_map'].cpu().repeat(1, 3, 1, 1)
         occlusion_map = F.interpolate(occlusion_map, size=source.shape[1:3]).numpy()[:self.num_rows]
         occlusion_map = np.transpose(occlusion_map, [0, 2, 3, 1])
         images.append(occlusion_map)
+
+        #generated driving image
+        prediction = out['prediction'].cpu().numpy()[:self.num_rows]
+        prediction = np.transpose(prediction, [0, 2, 3, 1])
+        images.append(prediction)        
 
         image = self.create_image_grid(*images)
         image = (255 * image).astype(np.uint8)
