@@ -16,6 +16,10 @@ class FirstOrderMotionModel:
         self.config = self._read_config(config_path)
 
         self.initialize_models(self.config['model_params'])
+        
+        if torch.cuda.is_available():
+            self.send_to_gpu()
+
         self.initialize_optimizers(self.config['train_params'])
         
         if checkpoint_path is not None:
@@ -67,7 +71,9 @@ class FirstOrderMotionModel:
                                                   last_epoch= start_epoch - 1)
 
     def send_to_gpu(self):
-        pass
+        self.kp_detector = self.kp_detector.to("cuda")
+        self.generator = self.generator.to("cuda")
+        self.discriminator = self.discriminator.to("cuda")
 
     def save_checkpoint(self, current_epoch):
         cpk = {'kp_detector': self.kp_detector.state_dict(),
