@@ -38,7 +38,7 @@ class FirstOrderMotionModel:
 
     def _read_config(self, config_path):
         f = open(config_path, "r")
-        config = yaml.load(f)
+        config = yaml.safe_load(f)
         return config        
 
     def initialize_models(self, model_params):
@@ -134,6 +134,7 @@ class FirstOrderMotionModel:
             for x in dataloader:
                 losses, output = self.optimize(x)
                 self.logger.log_batch_loss(losses)
+                break
             
             #update lr
             self.scheduler_kp_detector.step()

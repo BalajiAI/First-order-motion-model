@@ -3,11 +3,8 @@ import numpy as np
 import torch
 from torch.utils.data import Dataset
 
-from skimage import io, img_as_float32
-from skimage.color import gray2rgb
-from imageio import mimread
+from PIL import Image, ImageSequence
 
-import torchvision
 from torchvision.transforms import v2
 
 
@@ -23,7 +20,7 @@ def get_transform():
     return transforms
 
 
-def read_video(path:str, frame_shape=(256, 256, 3)):
+def read_video(path:str):
     """
     Reads the video from the given path.
     The path could contain any of the following:
@@ -32,15 +29,13 @@ def read_video(path:str, frame_shape=(256, 256, 3)):
         - .jpg or any image format which contains concatenated frames
     """
 
-    if path.endswith('.mp4') or path.endswith('.gif'):        
-        video = np.array(mimread(path))
-
-        if len(video.shape) == 3:
-            video = np.array([gray2rgb(frame) for frame in video])
-        if video.shape[-1] == 4:
-            video = video[..., :3]
-        #video_arr = img_as_float32(video)
-        video_arr = video        
+    if path.endswith('.gif'):       
+        image = Image.open(path)
+        frames = []
+        for frame in ImageSequence.Iterator(image):
+            frame = frame.convert('RGB')  
+            frames.append(np.asarray(frame))
+        video_arr =  np.stack(frames, axis=0)
 
     return video_arr
 
