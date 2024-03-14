@@ -134,7 +134,6 @@ class FirstOrderMotionModel:
             for x in dataloader:
                 losses, output = self.optimize(x)
                 self.logger.log_batch_loss(losses)
-                break
             
             #update lr
             self.scheduler_kp_detector.step()

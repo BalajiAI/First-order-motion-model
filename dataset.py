@@ -14,7 +14,7 @@ def get_transform():
                              v2.ToDtype(torch.uint8, scale=True),
                              v2.Resize([256, 256], antialias=True),
                              v2.RandomHorizontalFlip(0.5),
-                             v2.ColorJitter(brightness=0.1, saturation=0.1, contrast=0.1, hue=0.1),
+                             v2.ColorJitter(hue=0.5),
                              v2.ToDtype(torch.float32, scale=True),])
                              #v2.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
     return transforms
