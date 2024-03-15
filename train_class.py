@@ -15,10 +15,10 @@ class FirstOrderMotionModel:
     def __init__(self, config_path, log_path="logs", checkpoint_path=None) -> None:
         self.config = self._read_config(config_path)
 
-        self.initialize_models(self.config['model_params'])
-        
         if torch.cuda.is_available():
-            self.send_to_gpu()
+            self.device = torch.device("cuda")
+
+        self.initialize_models(self.config['model_params'])
 
         self.initialize_optimizers(self.config['train_params'])
         
@@ -43,13 +43,13 @@ class FirstOrderMotionModel:
 
     def initialize_models(self, model_params):
         self.kp_detector = KPDetector(**model_params['kp_detector_params'],
-                                      **model_params['common_params'])
+                                      **model_params['common_params']).to(self.device)
         
         self.generator = OcclusionAwareGenerator(**model_params['generator_params'],
-                                                 **model_params['common_params'])
+                                                 **model_params['common_params']).to(self.device)
         
         self.discriminator = MultiScaleDiscriminator(**model_params['discriminator_params'],
-                                                     **model_params['common_params'])
+                                                     **model_params['common_params']).to(self.device)
         
         self.generator_model = GeneratorModel(self.kp_detector, self.generator,
                                               self.discriminator, self.config['train_params'])
@@ -70,11 +70,6 @@ class FirstOrderMotionModel:
         self.scheduler_discriminator = MultiStepLR(self.opt_generator, train_params['epoch_milestones'], gamma=0.1,
                                                   last_epoch= start_epoch - 1)
 
-    def send_to_gpu(self):
-        self.kp_detector = self.kp_detector.to("cuda")
-        self.generator = self.generator.to("cuda")
-        self.discriminator = self.discriminator.to("cuda")
-
     def save_checkpoint(self, current_epoch):
         cpk = {'kp_detector': self.kp_detector.state_dict(),
                'generator': self.generator.state_dict(),
@@ -87,7 +82,7 @@ class FirstOrderMotionModel:
         torch.save(cpk, cpk_path)          
 
     def load_checkpoint(self, checkpoint_path):
-        cpk = torch.load(checkpoint_path, map_location='cpu')
+        cpk = torch.load(checkpoint_path, map_location=self.device)
         self.kp_detector.load_state_dict(cpk['kp_detector'])
         self.generator.load_state_dict(cpk['generator'])
         self.discriminator.load_state_dict(cpk['discriminator'])
@@ -132,6 +127,8 @@ class FirstOrderMotionModel:
     def train(self, dataloader):
         for epoch in range(self.start_epoch, self.config['train_params']['num_epochs']):
             for x in dataloader:
+                x = {'source': x['source'].to(self.device),
+                     'driving': x['driving'].to(self.device)}
                 losses, output = self.optimize(x)
                 self.logger.log_batch_loss(losses)
             

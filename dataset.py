@@ -5,19 +5,7 @@ from torch.utils.data import Dataset
 
 from PIL import Image, ImageSequence
 
-from torchvision.transforms import v2
-
-
-def get_transform():
-    transforms = v2.Compose([
-                             v2.ToImage(),
-                             v2.ToDtype(torch.uint8, scale=True),
-                             v2.Resize([256, 256], antialias=True),
-                             v2.RandomHorizontalFlip(0.5),
-                             v2.ColorJitter(hue=0.5),
-                             v2.ToDtype(torch.float32, scale=True),])
-                             #v2.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
-    return transforms
+from augmentation import get_transform
 
 
 def read_video(path:str):
@@ -58,11 +46,14 @@ class VideoDataset(Dataset):
         frame_idx = np.sort(np.random.choice(num_frames, replace=True, size=2))
         video_arr = video_arr[frame_idx]
 
-        source, driving = video_arr[0], video_arr[1]
+
+
 
         if self.transform is not None:
             source = self.transform(source)
             driving = self.transform(driving)
+
+        source, driving = video_arr[0], video_arr[1]
 
         output = {"source": source,
                   "driving": driving}

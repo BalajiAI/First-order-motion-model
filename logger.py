@@ -2,6 +2,7 @@
 
 import logging
 import numpy as np
+import matplotlib.pyplot as plt
 import torch.nn.functional as F
 
 from skimage.draw import disk
@@ -15,7 +16,7 @@ class Logger:
         self.batch_losses = []
         self.loss_names = None
 
-        self.visualizer = Visualizer(num_kp=5, num_rows=5,
+        self.visualizer = Visualizer(kp_size=5, num_rows=6,
                                      draw_border=True, colormap='gist_rainbow')
   
     def get_logger(self, log_path, log_filename):
@@ -42,7 +43,7 @@ class Logger:
     def log_epoch_loss(self, epoch):
         loss_mean = np.array(self.batch_losses).mean(axis=0)
 
-        loss_string = "; ".join([f"{name}-{value:.3f}" for name, value in zip(self.loss_names, loss_mean)])
+        loss_string = ", ".join([f"{name}:{value:.3f}" for name, value in zip(self.loss_names, loss_mean)])
         loss_string = "Epoch:" + str(epoch) + ' losses: ' + loss_string
 
         self.logger.info(loss_string)
@@ -55,11 +56,11 @@ class Logger:
 
 
 class Visualizer:
-    def __init__(self, num_kp=5, num_rows=5, draw_border=True, colormap='gist_rainbow'):
-        self.num_kp = num_kp #num of keypoints to plot on source & driving image
+    def __init__(self, kp_size=5, num_rows=5, draw_border=True, colormap='gist_rainbow'):
+        self.kp_size = kp_size #radius of keypoint
         self.num_rows = num_rows #num of data points to visualize
         self.draw_border = draw_border
-        self.colormap = colormap
+        self.colormap = plt.get_cmap(colormap)
 
     def draw_image_with_kp(self, image, kp_array):
         image = np.copy(image)
@@ -67,7 +68,7 @@ class Visualizer:
         kp_array = spatial_size * (kp_array + 1) / 2
         num_kp = kp_array.shape[0]
         for kp_ind, kp in enumerate(kp_array):
-            rr, cc = disk(kp[1], kp[0], self.kp_size, shape=image.shape[:2])
+            rr, cc = disk(kp, self.kp_size, shape=image.shape[:2])
             image[rr, cc] = np.array(self.colormap(kp_ind / num_kp))[:3]
         return image
 
@@ -96,23 +97,23 @@ class Visualizer:
         #source image with keypoints
         source = source.cpu().numpy()[:self.num_rows]
         source = np.transpose(source, [0, 2, 3, 1])
-        kp_source = out['kp_source']['value'].cpu().numpy()[:self.num_rows]        
+        kp_source = out['kp_source']['value'].detach().cpu().numpy()[:self.num_rows]        
         images.append((source, kp_source))
 
         #driving image with keypoints
         driving = driving.cpu().numpy()[:self.num_rows]
         driving = np.transpose(driving, [0, 2, 3, 1])
-        kp_driving = out['kp_driving']['value'].cpu().numpy()[:self.num_rows]
+        kp_driving = out['kp_driving']['value'].detach().cpu().numpy()[:self.num_rows]
         images.append((driving, kp_driving))
 
         ## Occlusion map  
         occlusion_map = out['occlusion_map'].cpu().repeat(1, 3, 1, 1)
-        occlusion_map = F.interpolate(occlusion_map, size=source.shape[1:3]).numpy()[:self.num_rows]
+        occlusion_map = F.interpolate(occlusion_map, size=source.shape[1:3]).detach().numpy()[:self.num_rows]
         occlusion_map = np.transpose(occlusion_map, [0, 2, 3, 1])
         images.append(occlusion_map)
 
         #generated driving image
-        prediction = out['prediction'].cpu().numpy()[:self.num_rows]
+        prediction = out['prediction'].detach().cpu().numpy()[:self.num_rows]
         prediction = np.transpose(prediction, [0, 2, 3, 1])
         images.append(prediction)        
 

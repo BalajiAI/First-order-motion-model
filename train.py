@@ -15,10 +15,11 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    dataset = VideoDataset(data_path=args.data_path, transform=get_transform())
-    dataloader = DataLoader(dataset, batch_size=32, shuffle=True, num_workers=4, pin_memory=True)
+    dataset = VideoDataset(data_path=args.data_path, transform=get_transform("mgif"))
+    dataloader = DataLoader(dataset, batch_size=16, shuffle=True, num_workers=2, pin_memory=True)
 
     model = FirstOrderMotionModel(config_path=args.config_path,
+                                  log_path=args.log_path,
                                   checkpoint_path=args.checkpoint_path)
     
     print("Training...")
