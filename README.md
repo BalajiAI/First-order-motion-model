@@ -9,6 +9,19 @@ Create a new virtual environment and run the following command to install the de
 pip install -r requirements.txt
 ```
 
+## Single GPU Training
+Run the following command to start training:
+```
+python train.py --data_path /path/to/data --config_path /configs/*.yaml --log_path /path/to/logs
+```
+
+## Multi GPU Training
+Move to "multi_gpu" branch of this repo and run the following:
+```
+python multi_gpu_train.py --data_path /path/to/data --config_path /configs/*.yaml --log_path /path/to/logs
+```
+
+
 ## Citation
 
 ```
