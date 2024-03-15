@@ -15,11 +15,9 @@ class FirstOrderMotionModel:
     def __init__(self, config_path, log_path="logs", checkpoint_path=None) -> None:
         self.config = self._read_config(config_path)
 
-        if torch.cuda.is_available():
-            self.device = torch.device("cuda")
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
         self.initialize_models(self.config['model_params'])
-
         self.initialize_optimizers(self.config['train_params'])
         
         if checkpoint_path is not None:

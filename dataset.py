@@ -46,12 +46,11 @@ class VideoDataset(Dataset):
         frame_idx = np.sort(np.random.choice(num_frames, replace=True, size=2))
         video_arr = video_arr[frame_idx]
 
-
-
+        video_arr = torch.tensor(video_arr) / 255
+        video_arr = video_arr.permute(0, 3, 1, 2)
 
         if self.transform is not None:
-            source = self.transform(source)
-            driving = self.transform(driving)
+            video_arr = self.transform(video_arr)
 
         source, driving = video_arr[0], video_arr[1]
 
