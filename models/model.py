@@ -17,6 +17,7 @@ class GeneratorModel(nn.Module):
         self.pyramid = ImagePyramide(self.scales, generator.num_channels)
         if torch.cuda.is_available():
             self.pyramid = self.pyramid.to("cuda")
+            #self.pyramid = torch.compile(self.pyramid)
 
         self.loss_weights = train_params['loss_weights']
 
@@ -24,6 +25,7 @@ class GeneratorModel(nn.Module):
             self.vgg = Vgg19()
             if torch.cuda.is_available():
                 self.vgg = self.vgg.to("cuda")
+                #self.vgg = torch.compile(self.vgg)
 
     def forward(self, x):
         kp_source = self.kp_extractor(x['source'])
@@ -108,6 +110,7 @@ class DiscriminatorModel(nn.Module):
         self.pyramid = ImagePyramide(self.scales, generator.num_channels)
         if torch.cuda.is_available():
             self.pyramid = self.pyramid.to("cuda")
+            #self.pyramid = torch.compile(self.pyramid)
 
         self.loss_weights = train_params['loss_weights']
 

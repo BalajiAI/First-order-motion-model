@@ -42,12 +42,15 @@ class FirstOrderMotionModel:
     def initialize_models(self, model_params):
         self.kp_detector = KPDetector(**model_params['kp_detector_params'],
                                       **model_params['common_params']).to(self.device)
+        #self.kp_detector = torch.compile(self.kp_detector)
         
         self.generator = OcclusionAwareGenerator(**model_params['generator_params'],
                                                  **model_params['common_params']).to(self.device)
+        #self.generator = torch.compile(self.generator)
         
         self.discriminator = MultiScaleDiscriminator(**model_params['discriminator_params'],
                                                      **model_params['common_params']).to(self.device)
+        #self.discriminator = torch.compile(self.discriminator)
         
         self.generator_model = GeneratorModel(self.kp_detector, self.generator,
                                               self.discriminator, self.config['train_params'])
