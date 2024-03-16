@@ -1,6 +1,7 @@
 import os
 import yaml
 import torch
+import torch.nn as nn
 from torch.optim.lr_scheduler import MultiStepLR
 
 from models.keypoint_detector import KPDetector
@@ -10,12 +11,14 @@ from models.model import GeneratorModel, DiscriminatorModel
 
 from logger import Logger
 
+from torch.nn.parallel import DistributedDataParallel as DDP
+
 
 class FirstOrderMotionModel:
-    def __init__(self, config_path, log_path="logs", checkpoint_path=None) -> None:
+    def __init__(self, config_path, log_path="logs", checkpoint_path=None, gpu_id=None) -> None:
         self.config = self._read_config(config_path)
 
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.gpu_id = gpu_id
 
         self.initialize_models(self.config['model_params'])
         self.initialize_optimizers(self.config['train_params'])
@@ -41,19 +44,27 @@ class FirstOrderMotionModel:
 
     def initialize_models(self, model_params):
         self.kp_detector = KPDetector(**model_params['kp_detector_params'],
-                                      **model_params['common_params']).to(self.device)
+                                      **model_params['common_params'])
+        self.kp_detector = nn.SyncBatchNorm.convert_sync_batchnorm(self.kp_detector)
+        self.kp_detector = DDP(self.kp_detector, device_ids=[self.gpu_id])
+        self.kp_detector = torch.compile(self.kp_detector)
         
         self.generator = OcclusionAwareGenerator(**model_params['generator_params'],
-                                                 **model_params['common_params']).to(self.device)
+                                                 **model_params['common_params'])
+        self.generator = nn.SyncBatchNorm.convert_sync_batchnorm(self.generator)
+        self.generator = DDP(self.generator, device_ids=[self.gpu_id])
+        self.generator = torch.compile(self.kp_detector)        
         
         self.discriminator = MultiScaleDiscriminator(**model_params['discriminator_params'],
                                                      **model_params['common_params']).to(self.device)
-        
+        self.discriminator =  DDP(self.discriminator, device_ids=[self.gpu_id])
+        self.discriminator = torch.compile(self.discriminator)
+
         self.generator_model = GeneratorModel(self.kp_detector, self.generator,
-                                              self.discriminator, self.config['train_params'])
+                                              self.discriminator, self.config['train_params'], self.gpu_id)
         
         self.discriminator_model = DiscriminatorModel(self.kp_detector, self.generator,
-                                                      self.discriminator, self.config['train_params'])
+                                                      self.discriminator, self.config['train_params'], self.gpu_id)
         
     def initialize_optimizers(self, train_params):
         self.opt_kp_detector = torch.optim.Adam(self.kp_detector.parameters(), lr=train_params['lr_kp_detector'], betas=(0.5, 0.999))
@@ -69,12 +80,12 @@ class FirstOrderMotionModel:
                                                   last_epoch= start_epoch - 1)
 
     def save_checkpoint(self, current_epoch):
-        cpk = {'kp_detector': self.kp_detector.state_dict(),
-               'generator': self.generator.state_dict(),
-               'discriminator': self.discriminator.state_dict(),
-               'opt_kp_detector': self.opt_kp_detector.state_dict(),
-               'opt_generator': self.opt_generator.state_dict(),
-               'opt_discriminator': self.opt_discriminator.state_dict(),
+        cpk = {'kp_detector': self.kp_detector.module.state_dict(),
+               'generator': self.generator.module.state_dict(),
+               'discriminator': self.discriminator.module.state_dict(),
+               'opt_kp_detector': self.opt_kp_detector.module.state_dict(),
+               'opt_generator': self.opt_generator.module.state_dict(),
+               'opt_discriminator': self.opt_discriminator.module.state_dict(),
                'epoch': current_epoch}
         cpk_path = f"{self.log_path}/checkpoints/{current_epoch}-checkpoint.pth"
         torch.save(cpk, cpk_path)          
@@ -124,6 +135,7 @@ class FirstOrderMotionModel:
 
     def train(self, dataloader):
         for epoch in range(self.start_epoch, self.config['train_params']['num_epochs']):
+            dataloader.sampler.set_epoch(epoch)
             for x in dataloader:
                 x = {'source': x['source'].to(self.device),
                      'driving': x['driving'].to(self.device)}
@@ -137,8 +149,8 @@ class FirstOrderMotionModel:
 
             self.logger.log_epoch_loss(epoch)
      
-            if (epoch + 1) % self.config['train_params']['checkpoint_freq'] == 0:
+            if ((epoch + 1) % self.config['train_params']['checkpoint_freq'] == 0) and (self.gpu_id == 0):
                 self.save_checkpoint(epoch)
 
-            if (epoch + 1) % self.config['train_params']['visualization_freq'] == 0:
+            if (epoch + 1) % self.config['train_params']['visualization_freq'] == 0 and (self.gpu_id == 0):
                 self.logger.log_vis_images(x['source'], x['driving'], output, epoch)

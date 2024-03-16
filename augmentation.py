@@ -17,18 +17,14 @@ class RandomTimeFlip(v2.Transform):
 
 def get_transform(dataset_name):
     if dataset_name == "mgif":
-        ratio = [0.9, 1.1]
-        min_size = int(ratio[0] * 256)
-        max_size = int(ratio[1] * 256)
         transforms = v2.Compose([
                                 v2.ToDtype(torch.uint8, scale=True),
                                 RandomTimeFlip(0.5),
                                 v2.RandomHorizontalFlip(0.5),
-                                #v2.RandomResize(min_size, max_size, interpolation=InterpolationMode.NEAREST),
                                 v2.RandomCrop(256),
                                 v2.ColorJitter(hue=0.5),
-                                v2.ToDtype(torch.float32, scale=True),])
-                                #v2.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])])
+                                v2.ToDtype(torch.float32, scale=True),
+                                v2.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])])
     
     elif dataset_name == "voxceleb":
         transforms = v2.Compose([

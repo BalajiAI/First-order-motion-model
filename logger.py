@@ -118,5 +118,7 @@ class Visualizer:
         images.append(prediction)        
 
         image = self.create_image_grid(*images)
-        image = (255 * image).astype(np.uint8)
+        image = (0.5 * image) + 0.5
+        image = 255 * image 
+        image = image.astype(np.uint8)
         return image

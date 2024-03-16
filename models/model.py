@@ -4,9 +4,11 @@ import torch.nn as nn
 from models.modules import Vgg19, ImagePyramide
 from models.utils import Transform, detach_kp
 
+from torch.nn.parallel import DistributedDataParallel as DDP
+
 
 class GeneratorModel(nn.Module):
-    def __init__(self, kp_extractor, generator, discriminator, train_params):
+    def __init__(self, kp_extractor, generator, discriminator, train_params, gpu_id):
         super().__init__()
         self.kp_extractor = kp_extractor
         self.generator = generator
@@ -15,15 +17,15 @@ class GeneratorModel(nn.Module):
         self.scales = train_params['scales']
         self.disc_scales = self.discriminator.scales
         self.pyramid = ImagePyramide(self.scales, generator.num_channels)
-        if torch.cuda.is_available():
-            self.pyramid = self.pyramid.to("cuda")
+        self.pyramid = DDP(self.pyramid, device_ids=[gpu_id])
+        self.pyramid = torch.compile(self.pyramid)
 
         self.loss_weights = train_params['loss_weights']
 
         if sum(self.loss_weights['perceptual']) != 0:
             self.vgg = Vgg19()
-            if torch.cuda.is_available():
-                self.vgg = self.vgg.to("cuda")
+            self.vgg = DDP(self.vgg, device_ids=[gpu_id])
+            self.vgg = torch.compile(self.vgg)
 
     def forward(self, x):
         kp_source = self.kp_extractor(x['source'])
@@ -98,7 +100,7 @@ class GeneratorModel(nn.Module):
 
 
 class DiscriminatorModel(nn.Module):
-    def __init__(self, kp_extractor, generator, discriminator, train_params):
+    def __init__(self, kp_extractor, generator, discriminator, train_params, gpu_id):
         super().__init__()
         self.kp_extractor = kp_extractor
         self.generator = generator
@@ -106,8 +108,8 @@ class DiscriminatorModel(nn.Module):
         self.train_params = train_params
         self.scales = self.discriminator.scales
         self.pyramid = ImagePyramide(self.scales, generator.num_channels)
-        if torch.cuda.is_available():
-            self.pyramid = self.pyramid.to("cuda")
+        self.pyramid = DDP(self.pyramid, device_ids=[gpu_id])
+        self.pyramid = torch.compile(self.pyramid)
 
         self.loss_weights = train_params['loss_weights']
 
