@@ -44,21 +44,21 @@ class FirstOrderMotionModel:
 
     def initialize_models(self, model_params):
         self.kp_detector = KPDetector(**model_params['kp_detector_params'],
-                                      **model_params['common_params'])
+                                      **model_params['common_params']).to(self.gpu_id)
         self.kp_detector = nn.SyncBatchNorm.convert_sync_batchnorm(self.kp_detector)
         self.kp_detector = DDP(self.kp_detector, device_ids=[self.gpu_id])
-        self.kp_detector = torch.compile(self.kp_detector)
+        #self.kp_detector = torch.compile(self.kp_detector)
         
         self.generator = OcclusionAwareGenerator(**model_params['generator_params'],
-                                                 **model_params['common_params'])
+                                                 **model_params['common_params']).to(self.gpu_id)
         self.generator = nn.SyncBatchNorm.convert_sync_batchnorm(self.generator)
         self.generator = DDP(self.generator, device_ids=[self.gpu_id])
-        self.generator = torch.compile(self.kp_detector)        
+        #self.generator = torch.compile(self.generator)        
         
         self.discriminator = MultiScaleDiscriminator(**model_params['discriminator_params'],
-                                                     **model_params['common_params']).to(self.device)
+                                                     **model_params['common_params']).to(self.gpu_id)
         self.discriminator =  DDP(self.discriminator, device_ids=[self.gpu_id])
-        self.discriminator = torch.compile(self.discriminator)
+        #self.discriminator = torch.compile(self.discriminator)
 
         self.generator_model = GeneratorModel(self.kp_detector, self.generator,
                                               self.discriminator, self.config['train_params'], self.gpu_id)
@@ -137,8 +137,8 @@ class FirstOrderMotionModel:
         for epoch in range(self.start_epoch, self.config['train_params']['num_epochs']):
             dataloader.sampler.set_epoch(epoch)
             for x in dataloader:
-                x = {'source': x['source'].to(self.device),
-                     'driving': x['driving'].to(self.device)}
+                x = {'source': x['source'].to(self.gpu_id),
+                     'driving': x['driving'].to(self.gpu_id)}
                 losses, output = self.optimize(x)
                 self.logger.log_batch_loss(losses)
             

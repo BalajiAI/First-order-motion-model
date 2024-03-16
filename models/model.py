@@ -15,17 +15,15 @@ class GeneratorModel(nn.Module):
         self.discriminator = discriminator
         self.train_params = train_params
         self.scales = train_params['scales']
-        self.disc_scales = self.discriminator.scales
-        self.pyramid = ImagePyramide(self.scales, generator.num_channels)
-        self.pyramid = DDP(self.pyramid, device_ids=[gpu_id])
-        self.pyramid = torch.compile(self.pyramid)
+        self.disc_scales = self.discriminator.module.scales
+        self.pyramid = ImagePyramide(self.scales, self.generator.module.num_channels).to(gpu_id)
+        #self.pyramid = torch.compile(self.pyramid)
 
         self.loss_weights = train_params['loss_weights']
 
         if sum(self.loss_weights['perceptual']) != 0:
-            self.vgg = Vgg19()
-            self.vgg = DDP(self.vgg, device_ids=[gpu_id])
-            self.vgg = torch.compile(self.vgg)
+            self.vgg = Vgg19().to(gpu_id)
+            #self.vgg = torch.compile(self.vgg)
 
     def forward(self, x):
         kp_source = self.kp_extractor(x['source'])
@@ -106,10 +104,9 @@ class DiscriminatorModel(nn.Module):
         self.generator = generator
         self.discriminator = discriminator
         self.train_params = train_params
-        self.scales = self.discriminator.scales
-        self.pyramid = ImagePyramide(self.scales, generator.num_channels)
-        self.pyramid = DDP(self.pyramid, device_ids=[gpu_id])
-        self.pyramid = torch.compile(self.pyramid)
+        self.scales = self.discriminator.module.scales
+        self.pyramid = ImagePyramide(self.scales, self.generator.module.num_channels).to(gpu_id)
+        #self.pyramid = torch.compile(self.pyramid)
 
         self.loss_weights = train_params['loss_weights']
 
