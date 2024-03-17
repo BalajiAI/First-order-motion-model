@@ -83,9 +83,9 @@ class FirstOrderMotionModel:
         cpk = {'kp_detector': self.kp_detector.module.state_dict(),
                'generator': self.generator.module.state_dict(),
                'discriminator': self.discriminator.module.state_dict(),
-               'opt_kp_detector': self.opt_kp_detector.module.state_dict(),
-               'opt_generator': self.opt_generator.module.state_dict(),
-               'opt_discriminator': self.opt_discriminator.module.state_dict(),
+               'opt_kp_detector': self.opt_kp_detector.state_dict(),
+               'opt_generator': self.opt_generator.state_dict(),
+               'opt_discriminator': self.opt_discriminator.state_dict(),
                'epoch': current_epoch}
         cpk_path = f"{self.log_path}/checkpoints/{current_epoch}-checkpoint.pth"
         torch.save(cpk, cpk_path)          
