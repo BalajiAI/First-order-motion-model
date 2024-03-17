@@ -91,10 +91,10 @@ class FirstOrderMotionModel:
         torch.save(cpk, cpk_path)          
 
     def load_checkpoint(self, checkpoint_path):
-        cpk = torch.load(checkpoint_path, map_location=self.device)
-        self.kp_detector.load_state_dict(cpk['kp_detector'])
-        self.generator.load_state_dict(cpk['generator'])
-        self.discriminator.load_state_dict(cpk['discriminator'])
+        cpk = torch.load(checkpoint_path, map_location=self.gpu_id)
+        self.kp_detector.module.load_state_dict(cpk['kp_detector'])
+        self.generator.module.load_state_dict(cpk['generator'])
+        self.discriminator.module.load_state_dict(cpk['discriminator'])
         self.opt_kp_detector.load_state_dict(cpk['opt_kp_detector'])
         self.opt_generator.load_state_dict(cpk['opt_generator'])
         self.opt_discriminator.load_state_dict(cpk['opt_discriminator'])

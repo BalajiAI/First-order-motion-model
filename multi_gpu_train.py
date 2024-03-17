@@ -1,7 +1,8 @@
 import os
 from argparse import ArgumentParser
 
-from dataset import VideoDataset, get_transform
+from dataset import VideoDataset, DatasetRepeater
+from augmentation import get_transform
 from train_class import FirstOrderMotionModel
 
 import torch
@@ -26,6 +27,7 @@ def ddp_setup(rank: int, world_size: int):
 def main(rank: int, world_size: int, args):
     ddp_setup(rank, world_size)
     dataset = VideoDataset(data_path=args.data_path, transform=get_transform("mgif"))
+    dataset = DatasetRepeater(dataset, num_repeats=25)
     dataloader = DataLoader(dataset, batch_size=16, shuffle=False, sampler=DistributedSampler(dataset),
                             num_workers=2, pin_memory=True)
     model = FirstOrderMotionModel(config_path=args.config_path, log_path=args.log_path,
