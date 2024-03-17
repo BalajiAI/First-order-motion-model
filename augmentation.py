@@ -1,7 +1,6 @@
 import torch
 import torch.nn as nn
 from torchvision.transforms import v2
-from torchvision.transforms import InterpolationMode
 
 
 class RandomTimeFlip(v2.Transform):
@@ -24,7 +23,6 @@ def get_transform(dataset_name):
                                 v2.RandomCrop(256),
                                 v2.ColorJitter(hue=0.5),
                                 v2.ToDtype(torch.float32, scale=True),])
-                                #v2.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])])
     
     elif dataset_name == "voxceleb":
         transforms = v2.Compose([
@@ -34,7 +32,5 @@ def get_transform(dataset_name):
                         v2.RandomHorizontalFlip(0.5),
                         v2.ColorJitter(brightness=0.1, contrast=0.1, saturation=0.1, hue=0.1),
                         v2.ToDtype(torch.float32, scale=True),])
-                        #v2.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
-
 
     return transforms

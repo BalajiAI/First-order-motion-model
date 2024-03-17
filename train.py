@@ -2,7 +2,8 @@ from argparse import ArgumentParser
 
 from torch.utils.data import DataLoader
 
-from dataset import VideoDataset, get_transform
+from dataset import VideoDataset, DatasetRepeater
+from augmentation import get_transform
 from train_class import FirstOrderMotionModel
 
 
@@ -16,6 +17,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     dataset = VideoDataset(data_path=args.data_path, transform=get_transform("mgif"))
+    dataset = DatasetRepeater(dataset, num_repeats=25)
     dataloader = DataLoader(dataset, batch_size=16, shuffle=True, num_workers=2, pin_memory=True)
 
     model = FirstOrderMotionModel(config_path=args.config_path,
