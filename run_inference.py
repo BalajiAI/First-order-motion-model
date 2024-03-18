@@ -95,26 +95,29 @@ def make_animation(source_image, driving_video, generator, kp_detector, relative
 
             predictions.append(prediction)
 
-        predictions = np.concatenate(predictions, axis=0)
+        predictions = np.stack(predictions, axis=0)
     
     return predictions
 
 
 def save_video(source, driving, prediction):
+
+    source = cv2.cvtColor(source, cv2.COLOR_RGB2BGR)
+
     im_h, im_w = (256, 256)
+    border_width = 1
+    border_color = (0, 0, 0)    
 
-    fourcc = cv2.VideoWriter_fourcc(*'MP4V')
-    out = cv2.VideoWriter('output_video.mp4', fourcc, 10.0, (im_w * 3, im_h))
-
-    border_width = 5
-    border_color = (255, 255, 255)  
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+    out = cv2.VideoWriter('output_video.mp4', fourcc, 10.0, (im_w * 3, im_h))  
 
     # Write each frame to the output video
     for i in range(driving.shape[0]):
-        combined_video = np.concatenate((source, driving[i], prediction[i]), axis=1)
+        driving_frame = cv2.cvtColor(driving[i], cv2.COLOR_RGB2BGR)
+        prediction_frame = cv2.cvtColor(prediction[i], cv2.COLOR_RGB2BGR)        
+        combined_video = np.concatenate((source, driving_frame, prediction_frame), axis=1)
         combined_video[:, im_w - border_width:im_w + border_width, :] = border_color
         combined_video[:, 2 * im_w - border_width:2 * im_w + border_width, :] = border_color
-        combined_video = (combined_video * 255).astype(np.uint8)
         out.write(combined_video)
 
     out.release()
@@ -123,8 +126,8 @@ def save_video(source, driving, prediction):
 
 if __name__ == "__main__":
     parser = ArgumentParser()
-    parser.add_argument("--source_path", help="path to source video")
-    parser.add_argument("--driving_path", help="path to driving video")    
+    parser.add_argument("--source_path", default="./mgif_test/00065.gif", help="path to source video")
+    parser.add_argument("--driving_path", default="./mgif_test/00017.gif", help="path to driving video")    
     parser.add_argument("--config_path", default="./configs/mgif.yaml", help="path to config file")
     parser.add_argument("--checkpoint_path", default=None, help="path to save the checkpoint")
     parser.add_argument("--relative", dest="relative", action="store_true", help="use relative or absolute keypoint coordinates")
@@ -140,5 +143,6 @@ if __name__ == "__main__":
     driving = read_video(args.driving_path)
     
     predictions = make_animation(source, driving, generator, kp_detector)
+
     save_video(source, driving, predictions)
     

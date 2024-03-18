@@ -163,3 +163,7 @@ cython_debug/
 dataset
 logs
 checkpoints
+mgif_test
+
+#files
+*mp4
