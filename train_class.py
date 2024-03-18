@@ -21,7 +21,7 @@ class FirstOrderMotionModel:
         self.initialize_optimizers(self.config['train_params'])
         
         if checkpoint_path is not None:
-            self.start_epoch = self.load_checkpoint(checkpoint_path)
+            self.start_epoch = self.load_checkpoint(checkpoint_path) + 1
         else:
             self.start_epoch = 0
 
