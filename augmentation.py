@@ -26,10 +26,10 @@ def get_transform(dataset_name):
     
     elif dataset_name == "voxceleb":
         transforms = v2.Compose([
-                        v2.ToImage(),
                         v2.ToDtype(torch.uint8, scale=True),
-                        v2.Resize([256, 256], antialias=True),
-                        v2.RandomHorizontalFlip(0.5),
+                        RandomTimeFlip(0.5),
+                        v2.RandomHorizontalFlip(0.5),                        
+                        v2.Resize(256, antialias=True),
                         v2.ColorJitter(brightness=0.1, contrast=0.1, saturation=0.1, hue=0.1),
                         v2.ToDtype(torch.float32, scale=True),])
 
