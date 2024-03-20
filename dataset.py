@@ -1,9 +1,13 @@
 import os
+import glob
 import numpy as np
 import torch
 from torch.utils.data import Dataset
 
 from PIL import Image, ImageSequence
+import torchvision
+
+from augmentation import get_transform
 
 
 def read_video(path:str):
@@ -23,22 +27,33 @@ def read_video(path:str):
             frames.append(np.asarray(frame))
         video_arr =  np.stack(frames, axis=0)
 
+    elif path.endswith('.mp4'):
+        video_arr = torchvision.io.read_video(path, pts_unit="sec", output_format="THWC")[0]
+        video_arr = video_arr.numpy()
+
     return video_arr
 
 
 class VideoDataset(Dataset):
-    def __init__(self, data_path:str, transform=None):
+    def __init__(self, data_path:str, id_sampling=False, transform=None):
         super().__init__()
         self.data_path = data_path
-        self.videos = os.listdir(data_path)
+        self.id_sampling = id_sampling
         self.transform = transform
-
+        self.videos = os.listdir(data_path)
+        
     def __len__(self):
         return len(self.videos)
     
     def __getitem__(self, idx:int):
-        video_name = self.videos[idx]
-        video_arr = read_video(f"{self.data_path}/{video_name}")
+        if self.id_sampling:
+            id_name = self.videos[idx]
+            id_videos = glob.glob(f"{self.data_path}/{id_name}/**/*.mp4")
+            video_path = np.random.choice(id_videos)
+            video_arr = read_video(video_path)
+        else:
+            video_name = self.videos[idx]
+            video_arr = read_video(f"{self.data_path}/{video_name}")
 
         num_frames = video_arr.shape[0]
         frame_idx = np.sort(np.random.choice(num_frames, replace=True, size=2))
@@ -68,3 +83,4 @@ class DatasetRepeater(Dataset):
 
     def __getitem__(self, idx):
         return self.dataset[idx % self.dataset.__len__()]
+    

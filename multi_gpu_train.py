@@ -26,9 +26,9 @@ def ddp_setup(rank: int, world_size: int):
 
 def main(rank: int, world_size: int, args):
     ddp_setup(rank, world_size)
-    dataset = VideoDataset(data_path=args.data_path, transform=get_transform("mgif"))
-    dataset = DatasetRepeater(dataset, num_repeats=25)
-    dataloader = DataLoader(dataset, batch_size=16, shuffle=False, sampler=DistributedSampler(dataset),
+    dataset = VideoDataset(data_path=args.data_path, id_sampling=True, transform=get_transform("voxceleb"))
+    dataset = DatasetRepeater(dataset, num_repeats=75)
+    dataloader = DataLoader(dataset, batch_size=32, shuffle=False, sampler=DistributedSampler(dataset),
                             num_workers=2, pin_memory=True)
     model = FirstOrderMotionModel(config_path=args.config_path, log_path=args.log_path,
                                   checkpoint_path=args.checkpoint_path, gpu_id=rank)
@@ -39,7 +39,7 @@ def main(rank: int, world_size: int, args):
 if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument("--data_path", default="./moving-gif/train", help="path to training data")
-    parser.add_argument("--config_path", default="./configs/mgif.yaml", help="path to config file")
+    parser.add_argument("--config_path", default="./configs/voxceleb.yaml", help="path to config file")
     parser.add_argument("--log_path", default='logs', help="path to log")
     parser.add_argument("--checkpoint_path", default=None, help="path to save the checkpoint")
 
