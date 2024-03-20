@@ -16,7 +16,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    dataset = VideoDataset(data_path=args.data_path, transform=get_transform("mgif"))
+    dataset = VideoDataset(data_path=args.data_path, id_sampling=False, transform=get_transform("mgif"))
     dataset = DatasetRepeater(dataset, num_repeats=25)
     dataloader = DataLoader(dataset, batch_size=16, shuffle=True, num_workers=2, pin_memory=True)
 
