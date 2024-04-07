@@ -6,6 +6,8 @@ import numpy as np
 from scipy.spatial import ConvexHull
 import cv2
 import torch
+import torchvision
+from torchvision.transforms import v2
 
 from dataset import read_video
 from models.keypoint_detector import KPDetector
@@ -63,23 +65,25 @@ def normalize_kp(kp_source, kp_driving, kp_driving_initial, adapt_movement_scale
 def make_animation(source_image, driving_video, generator, kp_detector, relative=True, adapt_movement_scale=True, device='cpu'):
     with torch.no_grad():
         predictions = []
-        source = torch.tensor(source_image, dtype=torch.float32) 
-        source = source / 255
-        source = source.permute(2, 0, 1)
+        #source = torch.tensor(source_image, dtype=torch.float32) 
+        #source = source / 255
+        #source = source.permute(2, 0, 1)
         source = source.unsqueeze(0)
         source = source.to(device)
 
-        driving = torch.tensor(driving_video, dtype=torch.float32) 
-        driving = driving / 255
-        driving = driving.permute(0, 3, 1, 2)
-        driving = driving.to(device)
+        #driving = torch.tensor(driving_video, dtype=torch.float32) 
+        #driving = driving / 255
+        #driving = driving.permute(0, 3, 1, 2)
+        #driving = driving.to(device)
 
  
         kp_source = kp_detector(source)
         kp_driving_initial = kp_detector(driving[0].unsqueeze(0))
 
         for frame_idx in range(driving.shape[0]):
-            driving_frame = driving[frame_idx].unsqueeze(0)
+            driving_frame = driving[frame_idx]
+            driving_frame = transforms(driving_frame)
+            driving_frame = driving.unsqueeze(0)
             driving_frame = driving_frame.to(device)
 
             kp_driving = kp_detector(driving_frame)
@@ -141,6 +145,11 @@ if __name__ == "__main__":
     kp_detector, generator = load_checkpoint(args.config_path, args.checkpoint_path, device)
     source = read_video(args.source_path)[0]
     driving = read_video(args.driving_path)
+
+    transforms = v2.Compose([v2.ToDtype(torch.uint8, scale=True),                       
+                        v2.Resize(256, antialias=True),
+                        v2.ToDtype(torch.float32, scale=True),])
+    source = transforms(source)
     
     predictions = make_animation(source, driving, generator, kp_detector)
 
