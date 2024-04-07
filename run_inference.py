@@ -68,7 +68,7 @@ def make_animation(source_image, driving_video, generator, kp_detector, relative
         #source = torch.tensor(source_image, dtype=torch.float32) 
         #source = source / 255
         #source = source.permute(2, 0, 1)
-        source = source.unsqueeze(0)
+        source = source_image.unsqueeze(0)
         source = source.to(device)
 
         #driving = torch.tensor(driving_video, dtype=torch.float32) 
